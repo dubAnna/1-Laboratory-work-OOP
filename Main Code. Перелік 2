@@ -1,0 +1,109 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <sstream>
+#include <bitset>
+#include <algorithm>
+
+struct IPv4Address {
+    int a1, a2, a3, a4;
+};
+
+struct IPv6Address {
+    std::vector<std::string> blocks;
+};
+
+std::vector<std::string> splitIPv6(std::string address) {
+    std::vector<std::string> result;
+    std::istringstream iss(address);
+    std::string block;
+    while (std::getline(iss, block, ':')) {
+        result.push_back(block);
+    }
+    return result;
+}
+
+bool isInSubnet(IPv4Address ip, IPv4Address subnet, int subnetBits) {
+    int subnetMask = (1 << (32 - subnetBits)) - 1;
+    int subnetValue = (subnet.a1 << 24) | (subnet.a2 << 16) | (subnet.a3 << 8) | subnet.a4;
+    int ipValue = (ip.a1 << 24) | (ip.a2 << 16) | (ip.a3 << 8) | ip.a4;
+
+    return (subnetValue & subnetMask) == (ipValue & subnetMask);
+}
+
+bool isInSubnet(IPv6Address ip, IPv6Address subnet, int subnetBits) {
+    // Створюємо маску підмережі
+    std::bitset<128> subnetBitsSet;
+    std::bitset<128> ipBitsSet;
+
+    for (int i = 0; i < 8; i++) {
+        std::bitset<128> blockBitsSet(std::stoull(subnet.blocks[i], nullptr, 16));
+        subnetBitsSet |= (blockBitsSet << (112 - i * 16));
+        
+        std::bitset<128> ipBlockBitsSet(std::stoull(ip.blocks[i], nullptr, 16));
+        ipBitsSet |= (ipBlockBitsSet << (112 - i * 16));
+    }
+
+    // Створюємо маску підмережі
+    std::bitset<128> subnetMaskSet;
+    for (int i = 0; i < subnetBits; i++) {
+        subnetMaskSet.set(127 - i, true);
+    }
+
+    // Порівнюємо адресу з маскою підмережі
+    return (subnetBitsSet & subnetMaskSet) == (ipBitsSet & subnetMaskSet);
+}
+
+
+IPv4Address findFreeIPv4Range(IPv4Address start, int subnetBits, std::vector<IPv4Address> usedAddresses) {
+    int subnetMask = (1 << (32 - subnetBits)) - 1;
+
+    // Перетворюємо IPv4 адреси у цілі числа для обчислень
+    int startValue = (start.a1 << 24) | (start.a2 << 16) | (start.a3 << 8) | start.a4;
+
+    int endValue = startValue | subnetMask;
+
+    // Перебираємо адреси у діапазоні та перевіряємо, чи вони вже використовуються
+    for (int i = startValue; i <= endValue; i++) {
+        bool isUsed = false;
+        for (const IPv4Address& usedAddress : usedAddresses) {
+            int usedValue = (usedAddress.a1 << 24) | (usedAddress.a2 << 16) | (usedAddress.a3 << 8) | usedAddress.a4;
+            if (i == usedValue) {
+                isUsed = true;
+                break;
+            }
+        }
+        if (!isUsed) {
+            IPv4Address freeAddress;
+            freeAddress.a1 = (i >> 24) & 0xFF;
+            freeAddress.a2 = (i >> 16) & 0xFF;
+            freeAddress.a3 = (i >> 8) & 0xFF;
+            freeAddress.a4 = i & 0xFF;
+            return freeAddress;
+        }
+    }
+
+    return {0, 0, 0, 0};
+}
+
+IPv6Address findFreeIPv6Range(IPv6Address start, int subnetBits, std::vector<IPv6Address> usedAddresses) {
+    return start;
+}
+
+int main() {
+    // Приклади використання функцій
+
+    IPv4Address ip4 = {192, 168, 0, 1};
+    IPv4Address subnet4 = {192, 168, 0, 0};
+    int subnetBits4 = 24;
+    bool result4 = isInSubnet(ip4, subnet4, subnetBits4);
+    std::cout << "IPv4 Address in Subnet: " << (result4 ? "Yes" : "No") << std::endl;
+
+    IPv6Address ip6 = {splitIPv6("2001:0db8:85a3:0000:0000:8a2e:0370:7334")};
+    IPv6Address subnet6 = {splitIPv6("2001:0db8:85a3:0000:0000:8a2e:0370:7330")};
+    int subnetBits6 = 64;
+    bool result6 = isInSubnet(ip6, subnet6, subnetBits6);
+    std::cout << "IPv6 Address in Subnet: " << (result6 ? "Yes" : "No") << std::endl;
+
+    return 0;
+}
