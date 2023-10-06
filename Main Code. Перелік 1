@@ -6,4 +6,155 @@
 +* за підтримку різних способів сортування (ключів сортування, зростання/спадання)  для одного об’єкта.
 +* за підтримку сортування за кількома критеріями (наприклад, спершу за одним полем, якщо значення однакові – за іншим і т.д.)
 
-Результат роботи коду:
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+//Реалізація сортування бульбашкою:
+
+void bubbleSort(std::vector<int>& arr) {
+    int n = arr.size();
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - i - 1; j++) {
+            if (arr[j] > arr[j + 1]) {
+                std::swap(arr[j], arr[j + 1]);
+            }
+        }
+    }
+}
+
+//Реалізація сортування підрахунком для масиву невід’ємних чисел:
+
+void countingSort(std::vector<int>& arr) {
+    int max_val = *std::max_element(arr.begin(), arr.end());
+    std::vector<int> count(max_val + 1, 0);
+
+    for (int num : arr) {
+        count[num]++;
+    }
+
+    int idx = 0;
+    for (int i = 0; i <= max_val; i++) {
+        while (count[i] > 0) {
+            arr[idx++] = i;
+            count[i]--;
+        }
+    }
+}
+
+//Інтерфейс для алгоритмів сортування:
+
+class SortAlgorithm {
+public:
+    virtual void sort(std::vector<int>& arr) = 0;
+};
+
+//Реалізація сортування бульбашкою через інтерфейс:
+class BubbleSort : public SortAlgorithm {
+public:
+    void sort(std::vector<int>& arr) override {
+        int n = arr.size();
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = 0; j < n - i - 1; j++) {
+                if (arr[j] > arr[j + 1]) {
+                    std::swap(arr[j], arr[j + 1]);
+                }
+            }
+        }
+    }
+};
+
+struct Person {
+    std::string name;
+    int age;
+};
+
+bool compareByNameAscending(const Person& a, const Person& b) {
+    return a.name < b.name;
+}
+
+bool compareByAgeDescending(const Person& a, const Person& b) {
+    return a.age > b.age;
+}
+
+//Оголошення функції порівняння для студентів:
+struct Student {
+    std::string name;
+    int age;
+    double gpa;
+};
+
+bool compareStudents(const Student& a, const Student& b);
+
+int main() {
+
+    //a)Реалізація інших алгоритмів сортування (сортування бульбашкою)
+    std::vector<int> arr = {64, 25, 12, 22, 11};
+    bubbleSort(arr);
+    std::cout << "Сортування бульбашкою: ";
+    for (int i : arr) {
+        std::cout << i << " ";
+    }
+    std::cout << std::endl;
+
+    //b)Реалізація сортування підрахунком (counting sort)
+    std::vector<int> arr2 = {4, 2, 2, 8, 3, 3, 1};
+    countingSort(arr2);
+    std::cout << "Сортування підрахунком: ";
+    for (int i : arr2) {
+        std::cout << i << " ";
+    }
+    std::cout << std::endl;
+
+    //c)Реалізація загального механізму для підключення нових алгоритмів сортування
+    SortAlgorithm* sorter = new BubbleSort();
+    std::vector<int> arr3 = {64, 25, 12, 22, 11};
+    sorter->sort(arr3);
+    std::cout << "Сортування за допомогою інтерфейсу: ";
+    for (int i : arr3) {
+        std::cout << i << " ";
+    }
+    std::cout << std::endl;
+    delete sorter;
+
+    //d)Підтримка різних способів сортування (ключів сортування, зростання/спадання) для одного об’єкта
+    std::vector<Person> people = {{"Alice", 25}, {"Bob", 24}, {"Charlie", 22}};
+    
+    //Сортування за іменами у зростаючому порядку:
+    std::sort(people.begin(), people.end(), compareByNameAscending);
+
+    std::cout << "Сортування за іменами (зростання):" << std::endl;
+    for (const Person& p : people) {
+        std::cout << p.name << ", " << p.age << " років" << std::endl;
+    }
+
+    //Сортування за віком у спадаючому порядку:
+    std::sort(people.begin(), people.end(), compareByAgeDescending);
+
+    std::cout << "Сортування за віком (спадання):" << std::endl;
+    for (const Person& p : people) {
+        std::cout << p.name << ", " << p.age << " років" << std::endl;
+    }
+
+    //e)Підтримка сортування за кількома критеріями
+    std::vector<Student> students = {{"Alice", 20, 3.5}, {"Bob", 22, 3.2}, {"Alice", 22, 3.8}};
+    std::sort(students.begin(), students.end(), compareStudents);
+
+    std::cout << "Сортування студентів за кількома критеріями:" << std::endl;
+    for (const Student& s : students) {
+        std::cout << s.name << ", " << s.age << " років, GPA: " << s.gpa << std::endl;
+    }
+
+    return 0;
+}
+
+//Оголошення функції порівняння для студентів
+bool compareStudents(const Student& a, const Student& b) {
+    if (a.name != b.name) {
+        return a.name < b.name; // Сортування за ім'ям
+    } else if (a.age != b.age) {
+        return a.age < b.age; // Якщо імена однакові, сортування за віком
+    } else {
+        return a.gpa > b.gpa; //Якщо імена та вік однакові, сортування за середнім балом
+    }
+}
