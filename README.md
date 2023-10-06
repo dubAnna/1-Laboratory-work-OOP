@@ -1,4 +1,4 @@
-# Laboratory-work-OOP.-2-Course.
+# Laboratory-work-OOP.-2-Course. 
 ІПС-22. Лабораторні роботи. ООП
 
 Перелік 1: структури даних та алгоритми.
